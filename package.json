@@ -1,0 +1,18 @@
+{
+  "name": "nawa-paint",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pressure-aware painting studio for desktop",
+  "main": "electron.cjs",
+  "scripts": {
+    "start": "electron .",
+    "dev": "node scripts/serve.cjs",
+    "test": "playwright test",
+    "package:win": "electron-packager . NawaPaint --platform=win32 --arch=x64 --out=dist --overwrite --ignore=\"^/(tests|test-results|playwright-report|scripts|dist|README.md|playwright.config.cjs)$\""
+  },
+  "devDependencies": {
+    "@electron/packager": "19.0.1",
+    "@playwright/test": "1.61.1",
+    "electron": "42.0.0"
+  }
+}

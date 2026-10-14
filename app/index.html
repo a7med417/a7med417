@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'">
+  <meta name="theme-color" content="#202228"><meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Nawa Paint — نواة</title><link rel="stylesheet" href="style.css"><link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="brand-mark">ن</span><div><strong>NAWA</strong><small>مساحتك للرسم</small></div></div>
+    <div class="file-actions"><button id="new">لوحة جديدة</button><button id="open">فتح مشروع</button><button id="save">حفظ المشروع</button><button id="export" class="accent">تصدير PNG ↗</button></div>
+    <input id="project-file" type="file" accept=".nawa,application/json" hidden>
+  </header>
+  <main>
+    <aside class="tools" dir="rtl">
+      <div class="section-title">الأدوات <span>01</span></div>
+      <div class="tool-grid"><button data-tool="brush" class="selected">✎ <span>فرشاة</span></button><button data-tool="eraser">▱ <span>ممحاة</span></button></div>
+      <div class="section-title">مكتبة الفرش</div>
+      <button class="preset selected" data-preset="ink"><span class="stroke ink"></span><strong>حبر ناعم</strong><small>خط واضح · ضغط القلم</small></button>
+      <button class="preset" data-preset="pencil"><span class="stroke pencil"></span><strong>قلم رصاص</strong><small>خفيف · للتخطيط</small></button>
+      <button class="preset" data-preset="air"><span class="stroke air"></span><strong>فرشاة هوائية</strong><small>حواف ناعمة · للتظليل</small></button>
+      <button class="preset" data-preset="water"><span class="stroke water"></span><strong>ألوان شفافة</strong><small>تراكم اللون · تدفق خفيف</small></button>
+      <div class="section-title">إعدادات الفرشاة</div>
+      <label>الحجم <output id="size-value">18 px</output><input id="size" type="range" min="1" max="160" value="18"></label>
+      <label>الشفافية <output id="opacity-value">100%</output><input id="opacity" type="range" min="1" max="100" value="100"></label>
+      <label>تثبيت الخط <output id="smooth-value">35%</output><input id="smooth" type="range" min="0" max="90" value="35"></label>
+      <label class="check"><input id="pressure" type="checkbox" checked> حجم الفرشاة حسب ضغط القلم</label>
+      <label class="check"><input id="pen-only" type="checkbox"> الرسم بالقلم فقط</label>
+      <p class="hint">B فرشاة · E ممحاة<br>Ctrl / ⌘ + Z تراجع<br>[ ] حجم الفرشاة</p>
+    </aside>
+    <section class="workspace">
+      <div class="canvas-toolbar"><span id="document-name">لوحة بلا عنوان</span><div><button id="undo" title="تراجع">↶</button><button id="redo" title="إعادة">↷</button><button id="fit">ملاءمة</button><button id="zoom-out">−</button><span id="zoom-label">100%</span><button id="zoom-in">+</button></div></div>
+      <div id="viewport"><div id="paper"><canvas id="surface" width="1600" height="1000" aria-label="لوحة الرسم"></canvas></div></div>
+      <footer><span id="status" role="status">جاهز للرسم — القلم أو الماوس</span><span>1600 × 1000 px <span class="dot">●</span> NAWA 0.1</span></footer>
+    </section>
+    <aside class="inspector" dir="rtl">
+      <div class="section-title">الألوان <span>02</span></div>
+      <div class="color-area"><input id="color" type="color" value="#344f65" aria-label="لون الفرشاة"><div><strong id="hex">#344F65</strong><small>اللون الحالي</small></div></div>
+      <div id="swatches"></div>
+      <div class="section-title layer-heading">الطبقات <button id="add-layer" title="إضافة طبقة">＋</button></div>
+      <div id="layers"></div>
+      <label>شفافية الطبقة <output id="layer-opacity-value">100%</output><input id="layer-opacity" type="range" min="0" max="100" value="100"></label>
+      <label>دمج الطبقة<select id="blend"><option value="source-over">عادي</option><option value="multiply">ضرب Multiply</option><option value="screen">إضاءة Screen</option></select></label>
+      <div class="layer-actions"><button id="layer-up" title="رفع الطبقة">↑</button><button id="layer-down" title="خفض الطبقة">↓</button><button id="delete-layer">حذف الطبقة</button></div>
+      <div class="note"><strong>ابدأ بخطّ واحد.</strong><p>كل فكرة تستحق مساحة.<br>ارسم، جرّب، وخلّها تكبر.</p></div>
+    </aside>
+  </main>
+  <script src="paint.js"></script>
+</body>
+</html>

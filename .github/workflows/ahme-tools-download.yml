@@ -1,0 +1,65 @@
+name: Publish AHME Tools download
+
+on:
+  push:
+    branches: [ahme-tools-download]
+    paths:
+      - downloads/AHME-Tools-Source.zip
+      - .github/workflows/ahme-tools-download.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ahme-tools-public-download
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Extract application source
+        run: unzip -q downloads/AHME-Tools-Source.zip -d build
+      - name: Install locked dependencies
+        working-directory: build/ahme-desktop
+        run: npm ci
+      - name: Check command mapping and integrity
+        working-directory: build/ahme-desktop
+        run: node --test tests/engine.test.cjs
+      - name: Package Windows application
+        working-directory: build/ahme-desktop
+        run: npm run package:win
+      - name: Create portable ZIP and checksums
+        working-directory: build/ahme-desktop
+        run: |
+          cp README.md dist/AHME-Tools-win32-x64/README-Arabic.md
+          mkdir -p dist/AHME-Tools-win32-x64/original
+          cp original/ahme.cmd dist/AHME-Tools-win32-x64/original/ahme.cmd
+          cd dist
+          zip -q -r AHME-Tools-Windows-x64.zip AHME-Tools-win32-x64
+          unzip -tq AHME-Tools-Windows-x64.zip
+          sha256sum AHME-Tools-Windows-x64.zip > SHA256SUMS.txt
+      - name: Publish downloadable files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          cat > /tmp/ahme-release-notes.md <<'NOTES'
+          واجهة عربية لملف ahme.cmd، تتضمن البحث والمفضلة ومعاينة الأوامر وسجل التنفيذ.
+
+          حمّل AHME-Tools-Windows-x64.zip، ثم فك الضغط بالكامل على كمبيوتر Windows وشغّل AHME-Tools.exe. يمكن حفظ ZIP على الموبايل ثم نقله للكمبيوتر. الحزمة محمولة وغير موقّعة، ولا تحتاج تثبيت Node.js.
+
+          اختُبرت الواجهة والربط على Linux؛ تشغيل EXE وأثر تعديلات Windows لم يُختبرا على Windows. تتضمن بعض الخيارات تغييرات حساسة في الحماية والإقلاع. ملفات خطة الطاقة وAutoruns غير موجودة في المرفق الأصلي وليست ضمن الحزمة؛ التفاصيل في README-Arabic.md والواجهة.
+          NOTES
+          if gh release view ahme-tools-v1.0.0 >/dev/null 2>&1; then
+            gh release upload ahme-tools-v1.0.0 build/ahme-desktop/dist/AHME-Tools-Windows-x64.zip build/ahme-desktop/dist/SHA256SUMS.txt downloads/AHME-Tools-Source.zip --clobber
+          else
+            gh release create ahme-tools-v1.0.0 build/ahme-desktop/dist/AHME-Tools-Windows-x64.zip build/ahme-desktop/dist/SHA256SUMS.txt downloads/AHME-Tools-Source.zip --target "$GITHUB_SHA" --title 'AHME Tools 1.0 — Windows ZIP' --notes-file /tmp/ahme-release-notes.md
+          fi

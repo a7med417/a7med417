@@ -52,14 +52,15 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           cat > /tmp/ahme-release-notes.md <<'NOTES'
-          واجهة عربية لملف ahme.cmd، تتضمن البحث والمفضلة ومعاينة الأوامر وسجل التنفيذ.
+          تحديث الواجهة 1.1: إضاءة وحلقات متحركة، انتقالات للبطاقات والنوافذ، تأثيرات للأزرار، وزر لإيقاف الحركة مع حفظ التفضيل واحترام تقليل الحركة في النظام. نجحت 13 تجربة محلية للواجهة والربط. جميع خيارات الملف الأصلي محفوظة.
 
           حمّل AHME-Tools-Windows-x64.zip، ثم فك الضغط بالكامل على كمبيوتر Windows وشغّل AHME-Tools.exe. يمكن حفظ ZIP على الموبايل ثم نقله للكمبيوتر. الحزمة محمولة وغير موقّعة، ولا تحتاج تثبيت Node.js.
 
           اختُبرت الواجهة والربط على Linux؛ تشغيل EXE وأثر تعديلات Windows لم يُختبرا على Windows. تتضمن بعض الخيارات تغييرات حساسة في الحماية والإقلاع. ملفات خطة الطاقة وAutoruns غير موجودة في المرفق الأصلي وليست ضمن الحزمة؛ التفاصيل في README-Arabic.md والواجهة.
           NOTES
           if gh release view ahme-tools-v1.0.0 >/dev/null 2>&1; then
-            gh release upload ahme-tools-v1.0.0 build/ahme-desktop/dist/AHME-Tools-Windows-x64.zip build/ahme-desktop/dist/SHA256SUMS.txt downloads/AHME-Tools-Source.zip --clobber
+            gh release upload ahme-tools-v1.0.0 build/ahme-desktop/dist/AHME-Tools-Windows-x64.zip build/ahme-desktop/dist/SHA256SUMS.txt downloads/AHME-Tools-Source.zip downloads/AHME-Tools-preview.png --clobber
+            gh release edit ahme-tools-v1.0.0 --title 'AHME Tools 1.1 — Motion Edition' --notes-file /tmp/ahme-release-notes.md
           else
-            gh release create ahme-tools-v1.0.0 build/ahme-desktop/dist/AHME-Tools-Windows-x64.zip build/ahme-desktop/dist/SHA256SUMS.txt downloads/AHME-Tools-Source.zip --target "$GITHUB_SHA" --title 'AHME Tools 1.0 — Windows ZIP' --notes-file /tmp/ahme-release-notes.md
+            gh release create ahme-tools-v1.0.0 build/ahme-desktop/dist/AHME-Tools-Windows-x64.zip build/ahme-desktop/dist/SHA256SUMS.txt downloads/AHME-Tools-Source.zip downloads/AHME-Tools-preview.png --target "$GITHUB_SHA" --title 'AHME Tools 1.1 — Motion Edition' --notes-file /tmp/ahme-release-notes.md
           fi

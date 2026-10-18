@@ -15,7 +15,37 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  windows-validation:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Extract application source
+        shell: powershell
+        run: Expand-Archive downloads/AHME-Tools-Source.zip -DestinationPath build
+      - name: Test Windows PowerShell maintenance with isolated cache fixtures
+        working-directory: build/ahme-desktop
+        shell: powershell
+        run: ./tests/maintenance.windows.ps1 | Tee-Object -FilePath windows-native.txt
+      - name: Test actual Windows bridge and hash verification
+        working-directory: build/ahme-desktop
+        shell: powershell
+        run: node tests/maintenance.windows.cjs
+      - name: Summarize native checks
+        if: always()
+        shell: pwsh
+        run: |
+          '### Windows maintenance validation' >> $env:GITHUB_STEP_SUMMARY
+          '```text' >> $env:GITHUB_STEP_SUMMARY
+          if (Test-Path build/ahme-desktop/windows-native.txt) { Get-Content build/ahme-desktop/windows-native.txt >> $env:GITHUB_STEP_SUMMARY }
+          '```' >> $env:GITHUB_STEP_SUMMARY
   build-and-publish:
+    needs: windows-validation
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -32,7 +62,7 @@ jobs:
         run: npm ci
       - name: Check command mapping and integrity
         working-directory: build/ahme-desktop
-        run: node --test tests/engine.test.cjs
+        run: node --test tests/*.test.cjs
       - name: Package Windows application
         working-directory: build/ahme-desktop
         run: npm run package:win
@@ -52,15 +82,17 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           cat > /tmp/ahme-release-notes.md <<'NOTES'
-          تحديث الواجهة 1.1: إضاءة وحلقات متحركة، انتقالات للبطاقات والنوافذ، تأثيرات للأزرار، وزر لإيقاف الحركة مع حفظ التفضيل واحترام تقليل الحركة في النظام. نجحت 13 تجربة محلية للواجهة والربط. جميع خيارات الملف الأصلي محفوظة.
+          إصدار 2.0: صفحة العناية بالجهاز، قراءات حقيقية للرام والمعالج، تحرير ذاكرة تطبيق محدد وطلب إغلاقه، فحص الكاش قبل الحذف، إيقاف وتشغيل خدمات اختيارية، إعدادات بدء التشغيل والطاقة والتخزين، وأربعة ثيمات مع مؤثرات قابلة للإيقاف. الخيارات الأصلية الـ71 محفوظة.
 
-          حمّل AHME-Tools-Windows-x64.zip، ثم فك الضغط بالكامل على كمبيوتر Windows وشغّل AHME-Tools.exe. يمكن حفظ ZIP على الموبايل ثم نقله للكمبيوتر. الحزمة محمولة وغير موقّعة، ولا تحتاج تثبيت Node.js.
+          حمّل AHME-Tools-Windows-x64.zip، ثم فك الضغط بالكامل على كمبيوتر Windows وشغّل AHME-Tools.exe. يمكنك حفظ ZIP على الموبايل ثم نقله للكمبيوتر. الحزمة محمولة وغير موقّعة، ولا تحتاج تثبيت Node.js.
 
-          اختُبرت الواجهة والربط على Linux؛ تشغيل EXE وأثر تعديلات Windows لم يُختبرا على Windows. تتضمن بعض الخيارات تغييرات حساسة في الحماية والإقلاع. ملفات خطة الطاقة وAutoruns غير موجودة في المرفق الأصلي وليست ضمن الحزمة؛ التفاصيل في README-Arabic.md والواجهة.
+          نجح محليًا 10 اختبارات Node و13 اختبار متصفح. يتطلب النشر أيضًا نجاح اختبارات التنظيف والذاكرة والربط على Windows بملفات تجريبية. لم يُختبر إيقاف الخدمات فعليًا أو تجربة UAC وواجهة EXE على جهاز شخصي، ولم يُقَس أثر تعديلات السكربت الأصلي أو تحسن السرعة. تحرير ذاكرة التطبيق مؤقت وقد يعيد تحميلها.
+
+          ملفات خطة الطاقة وAutoruns غير موجودة في المرفق الأصلي وليست ضمن الحزمة. زر إعدادات بدء التشغيل الجديد لا يحتاج Autoruns. التفاصيل في README-Arabic.md.
           NOTES
           if gh release view ahme-tools-v1.0.0 >/dev/null 2>&1; then
             gh release upload ahme-tools-v1.0.0 build/ahme-desktop/dist/AHME-Tools-Windows-x64.zip build/ahme-desktop/dist/SHA256SUMS.txt downloads/AHME-Tools-Source.zip downloads/AHME-Tools-preview.png --clobber
-            gh release edit ahme-tools-v1.0.0 --title 'AHME Tools 1.1 — Motion Edition' --notes-file /tmp/ahme-release-notes.md
+            gh release edit ahme-tools-v1.0.0 --title 'AHME Tools 2.0 — Care & Themes' --notes-file /tmp/ahme-release-notes.md
           else
-            gh release create ahme-tools-v1.0.0 build/ahme-desktop/dist/AHME-Tools-Windows-x64.zip build/ahme-desktop/dist/SHA256SUMS.txt downloads/AHME-Tools-Source.zip downloads/AHME-Tools-preview.png --target "$GITHUB_SHA" --title 'AHME Tools 1.1 — Motion Edition' --notes-file /tmp/ahme-release-notes.md
+            gh release create ahme-tools-v1.0.0 build/ahme-desktop/dist/AHME-Tools-Windows-x64.zip build/ahme-desktop/dist/SHA256SUMS.txt downloads/AHME-Tools-Source.zip downloads/AHME-Tools-preview.png --target "$GITHUB_SHA" --title 'AHME Tools 2.0 — Care & Themes' --notes-file /tmp/ahme-release-notes.md
           fi
